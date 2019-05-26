@@ -48,7 +48,7 @@ client.on("message", async message => {
   }
 
   if(command === "help") {
-    const sayMessage = "Probier mal:\n\n +help \n +nostalgie \n +animegirl \n +ping \n +say Is this real life? \n\n oder bau halt selbst was dazu --> <repo_url>";
+    const sayMessage = "Probier mal:\n\n +help \n +nostalgie \n +animegirl \n +ping \n +say Is this real life? \n\n oder bau halt selbst was dazu --> https://github.com/keldor2k/DiscordBot";
     message.channel.send(sayMessage);
   }
   
