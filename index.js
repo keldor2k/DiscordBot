@@ -22,7 +22,20 @@ client.on("guildCreate", guild => {
 // bot is removed from a guild / server
 client.on("guildDelete", guild => {
   console.log(`I have been removed from: ${guild.name} (id: ${guild.id})`);
-  client.user.setActivity(`Serving ${client.guilds.size} servers`);
+});
+
+client.on("presenceUpdate", (oldMember, newMember) => {
+  if(oldMember.user.bot) return;
+  console.log(`user update for: ${newMember.displayName}`);
+  if(oldMember.presence.status !== newMember.presence.status) {
+    console.log(`presenceUpdate: ${oldMember.presence.status} -> ${newMember.presence.status} `);
+  }
+  if(oldMember.presence.game !== null && oldMember.presence.game !== undefined) {
+    console.log(`oldMember - game: ${oldMember.presence.game.name} type: ${oldMember.presence.game.type} `);
+  }
+  if(newMember.presence.game !== null && newMember.presence.game !== undefined) {
+    console.log(`newMember - game: ${newMember.presence.game.name} type: ${newMember.presence.game.type} `);
+  }
 });
 
 // for every message (channel or DM)
@@ -48,7 +61,7 @@ client.on("message", async message => {
   }
 
   if(command === "help") {
-    const sayMessage = "Probier mal:\n\n +help \n +nostalgie \n +animegirl \n +ping \n +say Is this real life? \n\n oder bau halt selbst was dazu --> https://github.com/keldor2k/DiscordBot";
+    const sayMessage = "Probier mal:\n\n +würg @user (oder +würgen oder +choke) \n +help \n +nostalgie \n +animegirl \n +ping \n +say Is this real life? \n\n oder bau halt selbst was dazu --> https://github.com/keldor2k/DiscordBot";
     message.channel.send(sayMessage);
   }
   
@@ -75,6 +88,27 @@ client.on("message", async message => {
     message.delete().catch(console.error); 
     // And we get the bot to say the thing: 
     message.channel.send(sayMessage);
+  }
+
+  if(command === "choke" || command === "würg" || command === "würge" || command === "würgen") {
+    if (message.channel.type === "dm") {
+      return message.reply('sorry aber Würge-Anfragen mach ich nicht per Direct Message');
+    }
+    if (!message.mentions.users.size) {
+      return message.reply('wer soll gewürgt werden? Tagge einen User mit @');
+    }
+    if (message.mentions.users.size > 1) {
+      return message.reply('bitte würge nur einen User auf einmal.');
+    }
+    const taggedUser = message.mentions.users.first();
+    if (taggedUser.bot) {
+      return message.reply('Bots werden nicht gewürgt!');
+    }
+    message.reply(`ich würge ${taggedUser} für dich 👍 Frag ihn/sie wie es war pls :)`);
+    getRandomLine('chokes.csv', function(returnValue){
+      taggedUser.send(returnValue);
+      return;
+    });
   }
   
 });
