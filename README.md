@@ -1,4 +1,4 @@
-# DiscordBot-Muesli (aka '1 Bot')
+# DiscordBot (aka '1 Bot')
 
 A simple Discord Bot based on Node.js and discord.js.
 
