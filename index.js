@@ -1,10 +1,13 @@
-const Discord = require("discord.js");
-const client = new Discord.Client();
+const { Client, MessageEmbed }  = require("discord.js");
+const client = new Client();
 const fs = require('fs');
+const codAPI = require('call-of-duty-api')();
 
 // CONFIG
 const token = process.env.TOKEN;
 const prefix = "+";
+const COD_USERNAME = process.env.COD_USERNAME;
+const COD_PASSWORD = process.env.COD_PASSWORD;
 
 // on start
 client.on('ready', () => {
@@ -48,7 +51,22 @@ client.on('message', async message => {
   }
 
   if(command === 'help') {
-    const sayMessage = "Probier mal:\n\n +help \n +nostalgie \n +animegirl \n +ping \n +say Is this real life? \n\n oder bau halt selbst was dazu --> https://github.com/keldor2k/DiscordBot";
+    const sayMessage = `
+Ein Bot der Kleinigkeiten kann.
+
+Probier mal:
+
++help
++nostalgie
++animegirl
++ping
++say Is this real life?
+
+> BETA
++codstats
+
+oder bau halt selbst was dazu --> https://github.com/keldor2k/DiscordBot
+`;
     message.channel.send(sayMessage);
   }
   
@@ -67,15 +85,82 @@ client.on('message', async message => {
   }
 
   if(command === 'say') {
-    // makes the bot say something and delete the message. As an example, it's open to anyone to use. 
-    // To get the "message" itself we join the `args` back into a string with spaces: 
     const sayMessage = args.join(" ");
-    // Delete a message
     message.delete({ timeout: 2000 })
       .then(msg => console.log(`Deleted message from ${msg.author.username} after 2 seconds`))
       .catch(console.error);
-    // And we get the bot to say the thing: 
     message.channel.send(sayMessage);
+  }
+
+// Call of Duty API - Dirty Hack <3
+  if(command === 'codstats') {
+    const m = await message.channel.send("Loading...");
+    try {
+      await codAPI.login(COD_USERNAME, COD_PASSWORD);
+      let data = await codAPI.MWBattleData('Impact#2524', 'battle').catch(err => {
+          if(err.includes('Not permitted: not allowed')) {
+            message.channel.send("Not permitted to access data for 'Impact#2524'. Maybe profile is private?");
+          } else {
+            throw err;
+          }
+      });
+      let data2 = await codAPI.MWBattleData('N4VYNOX#2712', 'battle').catch(err => {
+          if(err.includes('Not permitted: not allowed')) {
+            message.channel.send("Not permitted to access data for 'N4VYNOX#2712'. Maybe profile is private?");
+          } else {
+            throw err;
+          }
+      });
+      // let data = await codAPI.MWleaderboard(1, 'battle').then(console.log('done')).catch(err => console.log(err));
+      const embed = new MessageEmbed()
+      .setColor('F6FF33')
+      .setThumbnail('https://d1yjjnpx0p53s8.cloudfront.net/styles/logo-thumbnail/s3/032020/call_of_duty_warzone.jpg')
+      .setTitle('COD Warzone')
+      .setDescription('Battle Royal stats overview:')
+      .addField('\u200B', '\u200B')
+      if (data) {
+        embed.addField('> Impact#2524', '\u200B', false)
+        embed.addFields(
+          {name: 'Wins', value: data.br.wins, inline: true},
+          {name: 'K/D ratio', value: (data.br.kdRatio).toFixed(2), inline: true},
+          {name: 'Downs', value: data.br.downs, inline: true},
+          {name: 'Score', value: data.br.score, inline: true},
+          {name: 'Time Played', value: (parseFloat(data.br.timePlayed) / 3600).toFixed(2) + 'hrs', inline: true},
+          {name: 'Games Played', value: data.br.gamesPlayed, inline: true},
+          {name: 'Score/min', value: (data.br.scorePerMinute).toFixed(2), inline: true},
+          {name: 'kills', value: data.br.kills, inline: true},
+          {name: 'Deaths', value: data.br.deaths, inline: true}
+          )
+      } else {
+        embed.addField('> Impact#2524', 'UNABLE TO ACCESS DATA :(', false)
+      }
+      embed.addField('\u200B', '\u200B')
+      if (data2) {
+        embed.addField('> N4VYNOX#2712', '\u200B', false)
+        embed.addFields(
+          {name: 'Wins', value: data2.br.wins, inline: true},
+          {name: 'K/D ratio', value: (data2.br.kdRatio).toFixed(2), inline: true},
+          {name: 'Downs', value: data2.br.downs, inline: true},
+          {name: 'Score', value: data2.br.score, inline: true},
+          {name: 'Time Played', value: (parseFloat(data2.br.timePlayed) / 3600).toFixed(2) + 'hrs', inline: true},
+          {name: 'Games Played', value: data2.br.gamesPlayed, inline: true},
+          {name: 'Score/min', value: (data2.br.scorePerMinute).toFixed(2), inline: true},
+          {name: 'kills', value: data2.br.kills, inline: true},
+          {name: 'Deaths', value: data2.br.deaths, inline: true}
+          )
+      } else {
+        embed.addField('> N4VYNOX#2712', 'UNABLE TO ACCESS DATA :(', false)
+      }
+      embed.addField('\u200B', '\u200B')
+      embed.setFooter("❔ - Type '+help' for more information")
+      message.channel.send(embed);
+      m.delete().catch(console.error);
+    } catch(error) {
+      m.delete().catch(console.error);
+      console.log("error :(")
+      console.log(error)
+      message.channel.send("Something happened... maybe try again");
+    }
   }
   
 });
