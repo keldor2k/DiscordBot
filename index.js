@@ -12,7 +12,8 @@ const COD_PASSWORD = process.env.COD_PASSWORD;
 // on start
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
-  console.log(`Bot has started, with ${client.users.cache.size} users, in ${client.channels.cache.size} channels of ${client.guilds.cache.size} guilds/servers.`); 
+  console.log(`Bot has started, serving ${client.users.cache.size} users, in ${client.channels.cache.size} channels of ${client.guilds.cache.size} guilds/servers:`); 
+  client.guilds.cache.forEach((value, key, map) => console.log(" - ", key, value.name));
   client.user.setActivity(`Halt's Maul! Und schreib +help`);
 });
 
@@ -63,7 +64,7 @@ Probier mal:
 +say Is this real life?
 
 > BETA
-+codstats
++codstats <playerName> <platform>
 
 oder bau halt selbst was dazu --> https://github.com/keldor2k/DiscordBot
 `;
@@ -94,33 +95,21 @@ oder bau halt selbst was dazu --> https://github.com/keldor2k/DiscordBot
 
 // Call of Duty API - Dirty Hack <3
   if(command === 'codstats') {
+  	if(!args[0]) {message.channel.send('Enter a gamertag/player name'); return;}
+  	if(!args[1]) {message.channel.send("Enter a platform (psn, xbl, battle, acti,...)"); return;}
     const m = await message.channel.send("Loading...");
     try {
       await codAPI.login(COD_USERNAME, COD_PASSWORD);
-      let data = await codAPI.MWBattleData('Impact#2524', 'battle').catch(err => {
-          if(err.includes('Not permitted: not allowed')) {
-            message.channel.send("Not permitted to access data for 'Impact#2524'. Maybe profile is private?");
-          } else {
-            throw err;
-          }
-      });
-      let data2 = await codAPI.MWBattleData('N4VYNOX#2712', 'battle').catch(err => {
-          if(err.includes('Not permitted: not allowed')) {
-            message.channel.send("Not permitted to access data for 'N4VYNOX#2712'. Maybe profile is private?");
-          } else {
-            throw err;
-          }
-      });
-      // let data = await codAPI.MWleaderboard(1, 'battle').then(console.log('done')).catch(err => console.log(err));
+      let data = await codAPI.MWBattleData(args[0], args[1]);
+
       const embed = new MessageEmbed()
       .setColor('F6FF33')
       .setThumbnail('https://d1yjjnpx0p53s8.cloudfront.net/styles/logo-thumbnail/s3/032020/call_of_duty_warzone.jpg')
       .setTitle('COD Warzone')
       .setDescription('Battle Royal stats overview:')
       .addField('\u200B', '\u200B')
-      if (data) {
-        embed.addField('> Impact#2524', '\u200B', false)
-        embed.addFields(
+      .addField(`> ${args[0]}`, '\u200B', false)
+      .addFields(
           {name: 'Wins', value: data.br.wins, inline: true},
           {name: 'K/D ratio', value: (data.br.kdRatio).toFixed(2), inline: true},
           {name: 'Downs', value: data.br.downs, inline: true},
@@ -128,38 +117,24 @@ oder bau halt selbst was dazu --> https://github.com/keldor2k/DiscordBot
           {name: 'Time Played', value: (parseFloat(data.br.timePlayed) / 3600).toFixed(2) + 'hrs', inline: true},
           {name: 'Games Played', value: data.br.gamesPlayed, inline: true},
           {name: 'Score/min', value: (data.br.scorePerMinute).toFixed(2), inline: true},
-          {name: 'kills', value: data.br.kills, inline: true},
+          {name: 'Kills', value: data.br.kills, inline: true},
           {name: 'Deaths', value: data.br.deaths, inline: true}
           )
-      } else {
-        embed.addField('> Impact#2524', 'UNABLE TO ACCESS DATA :(', false)
-      }
-      embed.addField('\u200B', '\u200B')
-      if (data2) {
-        embed.addField('> N4VYNOX#2712', '\u200B', false)
-        embed.addFields(
-          {name: 'Wins', value: data2.br.wins, inline: true},
-          {name: 'K/D ratio', value: (data2.br.kdRatio).toFixed(2), inline: true},
-          {name: 'Downs', value: data2.br.downs, inline: true},
-          {name: 'Score', value: data2.br.score, inline: true},
-          {name: 'Time Played', value: (parseFloat(data2.br.timePlayed) / 3600).toFixed(2) + 'hrs', inline: true},
-          {name: 'Games Played', value: data2.br.gamesPlayed, inline: true},
-          {name: 'Score/min', value: (data2.br.scorePerMinute).toFixed(2), inline: true},
-          {name: 'kills', value: data2.br.kills, inline: true},
-          {name: 'Deaths', value: data2.br.deaths, inline: true}
-          )
-      } else {
-        embed.addField('> N4VYNOX#2712', 'UNABLE TO ACCESS DATA :(', false)
-      }
-      embed.addField('\u200B', '\u200B')
-      embed.setFooter("❔ - Type '+help' for more information")
+      .addField('\u200B', '\u200B')
+      .setFooter("❔ - Type '+help' for more information")
       message.channel.send(embed);
       m.delete().catch(console.error);
     } catch(error) {
       m.delete().catch(console.error);
       console.log("error :(")
-      console.log(error)
-      message.channel.send("Something happened... maybe try again");
+      if(error.includes('Not permitted: not allowed')) {
+        message.channel.send(`Not permitted to access data for ${args[0]}. Maybe profile is private?`);
+      } else if (error.includes('404 - Not found. Incorrect username or platform?')) {
+          message.channel.send("Player doesn't exist. Incorrect username or platform? Here are some examples: \n> +codstats danielxgold psn\n> +codstats Impact#2524 battle");
+      } else {
+          console.log(error)
+          message.channel.send("Couldn't load player data.");
+      }
     }
   }
   
