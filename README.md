@@ -2,7 +2,7 @@
 
 A simple Discord Bot based on Node.js and discord.js.
 
-![asdf](https://i.imgur.com/Hoz9ru3.png)
+![bot-screenshot](screenshot_mueslibot.PNG)
 
 ## Commands
 
